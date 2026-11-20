@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Swift Package Manager & Xcode build artifacts
+.build/
+.swiftpm/
+Packages/
+DerivedData/
+xcuserdata/
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+
+# Packaged binary bundle (generated via make app / scripts/bundle_app.sh)
+Tinta.app/
