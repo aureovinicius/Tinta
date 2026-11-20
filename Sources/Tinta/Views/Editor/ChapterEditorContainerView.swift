@@ -376,6 +376,23 @@ public struct ChapterEditorContainerView: View {
                 .foregroundStyle(.secondary)
             }
 
+            Divider().frame(height: 12)
+
+            // Quick Night Mode Toggle in Bottom Status Bar
+            Button {
+                store.toggleNightMode()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: store.isNightMode ? "moon.stars.fill" : "sun.max")
+                        .foregroundStyle(store.isNightMode ? .yellow : .secondary)
+                    Text(store.theme.rawValue)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .help("Alternar entre Modo Diurno e Modo Noturno (⌃⌘N)")
+
             if store.isZenMode {
                 Button {
                     withAnimation {
@@ -398,14 +415,47 @@ public struct ChapterEditorContainerView: View {
 
     private var typographySettingsPopover: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Aparência & Tipografia Editorial")
-                .font(.headline)
+            HStack {
+                Text("Aparência & Tipografia")
+                    .font(.headline)
+                Spacer()
+                Button {
+                    store.toggleNightMode()
+                } label: {
+                    Label(
+                        store.isNightMode ? "Noturno Ativo" : "Ativar Noturno",
+                        systemImage: store.isNightMode ? "moon.stars.fill" : "moon"
+                    )
+                    .font(.caption.weight(.medium))
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(store.isNightMode ? .indigo : .secondary)
+                .controlSize(.small)
+            }
 
-            Picker("Tema de Papel", selection: $store.theme) {
-                ForEach(EditorTheme.allCases) { theme in
-                    Text(theme.rawValue).tag(theme)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("MODO NOTURNO")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    ForEach(EditorTheme.nightThemes) { th in
+                        themeSwatchButton(for: th)
+                    }
                 }
             }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("MODO DIURNO")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    ForEach(EditorTheme.dayThemes) { th in
+                        themeSwatchButton(for: th)
+                    }
+                }
+            }
+
+            Divider()
 
             Picker("Fonte", selection: $store.fontStyle) {
                 ForEach(EditorFontStyle.allCases) { font in
@@ -435,7 +485,44 @@ public struct ChapterEditorContainerView: View {
             }
         }
         .padding(16)
-        .frame(width: 310)
+        .frame(width: 340)
+    }
+
+    private func themeSwatchButton(for th: EditorTheme) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                store.theme = th
+            }
+        } label: {
+            VStack(spacing: 4) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(th.backgroundColor)
+                        .frame(height: 32)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7)
+                                .strokeBorder(
+                                    store.theme == th ? th.accentColor : Color.primary.opacity(0.18),
+                                    lineWidth: store.theme == th ? 2.5 : 1
+                                )
+                        )
+                    HStack(spacing: 4) {
+                        Image(systemName: th.iconName)
+                            .font(.caption2)
+                            .foregroundStyle(th.accentColor)
+                        Text("Aa")
+                            .font(.system(size: 12, weight: .bold, design: .serif))
+                            .foregroundStyle(th.textColor)
+                    }
+                }
+                Text(th.rawValue)
+                    .font(.system(size: 10, weight: store.theme == th ? .bold : .regular))
+                    .foregroundStyle(store.theme == th ? .primary : .secondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Helpers

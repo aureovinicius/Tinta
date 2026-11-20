@@ -164,6 +164,51 @@ public struct MainWorkspaceView: View {
 
         ToolbarItemGroup(placement: .primaryAction) {
             Button {
+                store.toggleNightMode()
+            } label: {
+                Label(
+                    store.isNightMode ? "Modo Diurno" : "Modo Noturno",
+                    systemImage: store.isNightMode ? "moon.stars.fill" : "moon"
+                )
+                .foregroundStyle(store.isNightMode ? .yellow : .primary)
+            }
+            .help(store.isNightMode ? "Alternar para Modo Diurno (⌃⌘N)" : "Alternar para Modo Noturno (⌃⌘N)")
+
+            Menu {
+                Section("Modo Noturno") {
+                    ForEach(EditorTheme.nightThemes) { nightTheme in
+                        Button {
+                            store.theme = nightTheme
+                        } label: {
+                            HStack {
+                                Label(nightTheme.rawValue, systemImage: nightTheme.iconName)
+                                if store.theme == nightTheme {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                }
+                Section("Modo Diurno") {
+                    ForEach(EditorTheme.dayThemes) { dayTheme in
+                        Button {
+                            store.theme = dayTheme
+                        } label: {
+                            HStack {
+                                Label(dayTheme.rawValue, systemImage: dayTheme.iconName)
+                                if store.theme == dayTheme {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                }
+            } label: {
+                Label(store.theme.rawValue, systemImage: "paintpalette")
+            }
+            .help("Escolher paleta de tema (Diurno / Noturno)")
+
+            Button {
                 withAnimation(.easeInOut(duration: 0.25)) {
                     store.isZenMode.toggle()
                 }

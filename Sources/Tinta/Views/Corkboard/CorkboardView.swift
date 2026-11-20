@@ -260,8 +260,8 @@ public struct CorkboardCardView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(nsColor: .controlBackgroundColor))
-                .shadow(color: .black.opacity(0.07), radius: 5, x: 0, y: 2)
+                .fill(store.theme.cardBackgroundColor)
+                .shadow(color: .black.opacity(store.isNightMode ? 0.35 : 0.07), radius: 5, x: 0, y: 2)
         )
         .overlay(alignment: .top) {
             UnevenRoundedRectangle(topLeadingRadius: 12, topTrailingRadius: 12)

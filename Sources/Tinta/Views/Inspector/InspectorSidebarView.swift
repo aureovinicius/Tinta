@@ -409,7 +409,7 @@ public struct InspectorSidebarView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color(nsColor: .controlBackgroundColor))
+                .fill(store.theme.cardBackgroundColor)
         )
     }
 

@@ -117,11 +117,37 @@ public enum EditorTheme: String, Codable, CaseIterable, Identifiable {
     case daylight = "Tinta Clara"
     case sepia = "Sépia Clássico"
     case midnight = "Meia-Noite"
+    case amberNight = "Noturno Âmbar"
+    case obsidian = "Obsidiana OLED"
 
     public var id: String { rawValue }
 
     public var isDark: Bool {
-        self == .midnight
+        switch self {
+        case .parchment, .daylight, .sepia:
+            return false
+        case .midnight, .amberNight, .obsidian:
+            return true
+        }
+    }
+
+    public static var dayThemes: [EditorTheme] {
+        [.parchment, .daylight, .sepia]
+    }
+
+    public static var nightThemes: [EditorTheme] {
+        [.midnight, .amberNight, .obsidian]
+    }
+
+    public var iconName: String {
+        switch self {
+        case .parchment: return "book.pages"
+        case .daylight: return "sun.max.fill"
+        case .sepia: return "cup.and.saucer.fill"
+        case .midnight: return "moon.stars.fill"
+        case .amberNight: return "flame.fill"
+        case .obsidian: return "sparkles"
+        }
     }
 
     public var backgroundNSColor: NSColor {
@@ -129,7 +155,20 @@ public enum EditorTheme: String, Codable, CaseIterable, Identifiable {
         case .parchment: return NSColor(calibratedRed: 0.980, green: 0.968, blue: 0.935, alpha: 1.0)
         case .daylight: return NSColor(calibratedRed: 0.992, green: 0.992, blue: 0.995, alpha: 1.0)
         case .sepia: return NSColor(calibratedRed: 0.945, green: 0.914, blue: 0.855, alpha: 1.0)
-        case .midnight: return NSColor(calibratedRed: 0.110, green: 0.118, blue: 0.135, alpha: 1.0)
+        case .midnight: return NSColor(calibratedRed: 0.105, green: 0.115, blue: 0.138, alpha: 1.0)
+        case .amberNight: return NSColor(calibratedRed: 0.098, green: 0.082, blue: 0.070, alpha: 1.0)
+        case .obsidian: return NSColor(calibratedRed: 0.058, green: 0.062, blue: 0.072, alpha: 1.0)
+        }
+    }
+
+    public var cardBackgroundNSColor: NSColor {
+        switch self {
+        case .parchment: return NSColor(calibratedRed: 0.952, green: 0.936, blue: 0.892, alpha: 1.0)
+        case .daylight: return NSColor(calibratedRed: 0.960, green: 0.965, blue: 0.975, alpha: 1.0)
+        case .sepia: return NSColor(calibratedRed: 0.912, green: 0.875, blue: 0.805, alpha: 1.0)
+        case .midnight: return NSColor(calibratedRed: 0.148, green: 0.162, blue: 0.192, alpha: 1.0)
+        case .amberNight: return NSColor(calibratedRed: 0.142, green: 0.118, blue: 0.100, alpha: 1.0)
+        case .obsidian: return NSColor(calibratedRed: 0.105, green: 0.112, blue: 0.128, alpha: 1.0)
         }
     }
 
@@ -139,6 +178,8 @@ public enum EditorTheme: String, Codable, CaseIterable, Identifiable {
         case .daylight: return NSColor(calibratedRed: 0.12, green: 0.13, blue: 0.15, alpha: 1.0)
         case .sepia: return NSColor(calibratedRed: 0.22, green: 0.17, blue: 0.12, alpha: 1.0)
         case .midnight: return NSColor(calibratedRed: 0.89, green: 0.88, blue: 0.85, alpha: 1.0)
+        case .amberNight: return NSColor(calibratedRed: 0.92, green: 0.84, blue: 0.71, alpha: 1.0)
+        case .obsidian: return NSColor(calibratedRed: 0.91, green: 0.92, blue: 0.94, alpha: 1.0)
         }
     }
 
@@ -148,6 +189,8 @@ public enum EditorTheme: String, Codable, CaseIterable, Identifiable {
         case .daylight: return NSColor(calibratedRed: 0.16, green: 0.40, blue: 0.68, alpha: 1.0)
         case .sepia: return NSColor(calibratedRed: 0.58, green: 0.26, blue: 0.12, alpha: 1.0)
         case .midnight: return NSColor(calibratedRed: 0.88, green: 0.62, blue: 0.34, alpha: 1.0)
+        case .amberNight: return NSColor(calibratedRed: 0.90, green: 0.54, blue: 0.25, alpha: 1.0)
+        case .obsidian: return NSColor(calibratedRed: 0.38, green: 0.78, blue: 0.68, alpha: 1.0)
         }
     }
 
@@ -157,6 +200,8 @@ public enum EditorTheme: String, Codable, CaseIterable, Identifiable {
         case .daylight: return NSColor(calibratedRed: 0.15, green: 0.38, blue: 0.36, alpha: 1.0)
         case .sepia: return NSColor(calibratedRed: 0.24, green: 0.36, blue: 0.26, alpha: 1.0)
         case .midnight: return NSColor(calibratedRed: 0.58, green: 0.78, blue: 0.68, alpha: 1.0)
+        case .amberNight: return NSColor(calibratedRed: 0.82, green: 0.72, blue: 0.52, alpha: 1.0)
+        case .obsidian: return NSColor(calibratedRed: 0.56, green: 0.84, blue: 0.78, alpha: 1.0)
         }
     }
 
@@ -164,12 +209,13 @@ public enum EditorTheme: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .parchment, .daylight, .sepia:
             return textNSColor.withAlphaComponent(0.32)
-        case .midnight:
+        case .midnight, .amberNight, .obsidian:
             return textNSColor.withAlphaComponent(0.28)
         }
     }
 
     public var backgroundColor: Color { Color(nsColor: backgroundNSColor) }
+    public var cardBackgroundColor: Color { Color(nsColor: cardBackgroundNSColor) }
     public var textColor: Color { Color(nsColor: textNSColor) }
     public var accentColor: Color { Color(nsColor: accentNSColor) }
 }

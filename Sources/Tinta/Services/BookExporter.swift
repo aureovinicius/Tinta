@@ -197,6 +197,16 @@ public enum BookExporter {
             textHex = "#E4E1DA"
             accentHex = "#E09E56"
             cardHex = "#23272E"
+        case .amberNight:
+            bgHex = "#181411"
+            textHex = "#EAD7B7"
+            accentHex = "#E68A40"
+            cardHex = "#241E1A"
+        case .obsidian:
+            bgHex = "#0F1012"
+            textHex = "#E8EAEF"
+            accentHex = "#60C7AD"
+            cardHex = "#1A1C20"
         }
 
         var bodyHTML: [String] = []

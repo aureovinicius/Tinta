@@ -257,10 +257,24 @@ public struct TintaApp: App {
 
             Divider()
 
-            Menu("Tema de Papel") {
-                ForEach(EditorTheme.allCases) { th in
-                    Button(th.rawValue) {
-                        store.theme = th
+            Button(store.isNightMode ? "Desativar Modo Noturno (Voltar ao Diurno)" : "Ativar Modo Noturno") {
+                store.toggleNightMode()
+            }
+            .keyboardShortcut("n", modifiers: [.command, .control])
+
+            Menu("Tema de Papel & Modo Noturno") {
+                Section("Modo Noturno") {
+                    ForEach(EditorTheme.nightThemes) { th in
+                        Button(th.rawValue) {
+                            store.theme = th
+                        }
+                    }
+                }
+                Section("Modo Diurno") {
+                    ForEach(EditorTheme.dayThemes) { th in
+                        Button(th.rawValue) {
+                            store.theme = th
+                        }
                     }
                 }
             }

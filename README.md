@@ -14,7 +14,11 @@
      - **Notas & Pesquisa**: Caderno Markdown integrado para pesquisa histórica, regras de mundo e referências.
    - **Lixeira Segura**: Capítulos excluídos vão para a Lixeira do projeto e podem ser restaurados com um clique.
 
-2. **Editor Markdown Literário Nativo (AppKit `NSTextView`)**
+2. **Editor Markdown Literário Nativo (AppKit `NSTextView`) & Modo Noturno**
+   - **Modo Noturno com Um Clique (`⌃⌘N`)**: Botão dedicado de Lua/Sol na barra de ferramentas principal, no rodapé do editor e no popover de Tipografia que alterna instantaneamente toda a interface do macOS (`Dark Aqua` / `Aqua`), lembrando seu tema diurno e seu tema noturno preferidos.
+   - **3 Paletas Noturnas Editoriais + 3 Diurnas**:
+     - *Noturnas*: **Meia-Noite** (ardósia profundo com texto marfim), **Noturno Âmbar** (baixa luz azul com tons sépia-escuros para conforto ocular à noite) e **Obsidiana OLED** (alto contraste em preto carbono).
+     - *Diurnas*: **Pólen Literário**, **Tinta Clara** e **Sépia Clássico**.
    - **Realce Sintático Editorial**: Destaque para cabeçalhos (`#`, `##`, `###`), negrito, itálico, citações (`>`), quebras de cena (`* * *`), notas ocultas de revisão (`%% ... %%`), links para a Bíblia da História (`[[Personagem]]`) e **realce sutil para linhas de diálogo literário** iniciadas por travessão (`—`).
    - **Conversão Automática de Travessão**: Digitar `-- ` converte automaticamente para o travessão literário `— `.
    - **Modo Máquina de Escrever (`⌥⌘T`)**: Mantém a linha ativa sempre centralizada verticalmente na tela.

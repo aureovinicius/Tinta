@@ -141,7 +141,7 @@ public struct OutlinePacingView: View {
                 .padding(18)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .fill(store.theme.cardBackgroundColor)
                 )
 
                 // Structured Escaleta Table grouped by Act / Part
@@ -166,7 +166,7 @@ public struct OutlinePacingView: View {
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(nsColor: .controlBackgroundColor))
+                                .fill(store.theme.cardBackgroundColor)
                         )
                     }
                 }

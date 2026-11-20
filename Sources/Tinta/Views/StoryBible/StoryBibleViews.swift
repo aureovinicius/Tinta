@@ -99,7 +99,7 @@ public struct CharacterEditorView: View {
                     .padding(20)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                            .fill(store.theme.cardBackgroundColor)
                     )
 
                     // Character Psychological & Narrative Fields
@@ -223,7 +223,7 @@ public struct CharacterEditorView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color(nsColor: .controlBackgroundColor))
+                                    .fill(store.theme.cardBackgroundColor)
                             )
                         }
                     }
@@ -309,7 +309,7 @@ public struct LocationEditorView: View {
                     .padding(20)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                            .fill(store.theme.cardBackgroundColor)
                     )
 
                     HStack(alignment: .top, spacing: 18) {
@@ -402,7 +402,7 @@ public struct LocationEditorView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                            .fill(store.theme.cardBackgroundColor)
                     )
                 }
                 .padding(24)

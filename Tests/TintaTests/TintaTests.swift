@@ -106,4 +106,30 @@ struct TintaTests {
         let fullBookPath = tempExportDir.appendingPathComponent("00_Livro_Completo.md").path
         #expect(FileManager.default.fileExists(atPath: fullBookPath))
     }
+
+    @Test("Alternância de Modo Noturno e retenção de temas preferidos")
+    @MainActor
+    func testNightModeToggleAndThemes() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("TintaNightTests_\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let store = BookStore(customStorageDirectory: tempDir)
+        store.theme = .sepia
+        #expect(!store.isNightMode)
+        #expect(store.preferredDayTheme == .sepia)
+
+        store.theme = .amberNight
+        #expect(store.isNightMode)
+        #expect(store.preferredNightTheme == .amberNight)
+
+        // Toggle back to Day Mode should restore .sepia
+        store.toggleNightMode()
+        #expect(!store.isNightMode)
+        #expect(store.theme == .sepia)
+
+        // Toggle back to Night Mode should restore .amberNight
+        store.toggleNightMode()
+        #expect(store.isNightMode)
+        #expect(store.theme == .amberNight)
+    }
 }

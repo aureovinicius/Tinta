@@ -22,13 +22,31 @@ public final class BookStore: ObservableObject {
     @Published public var statusBannerMessage: String? = nil
 
     // MARK: - Editor Typography & Appearance Preferences
-    @Published public var theme: EditorTheme = .parchment
+    @Published public var theme: EditorTheme = .parchment {
+        didSet {
+            if theme.isDark {
+                preferredNightTheme = theme
+            } else {
+                preferredDayTheme = theme
+            }
+            UserDefaults.standard.set(theme.rawValue, forKey: "Tinta.activeTheme")
+            UserDefaults.standard.set(preferredDayTheme.rawValue, forKey: "Tinta.preferredDayTheme")
+            UserDefaults.standard.set(preferredNightTheme.rawValue, forKey: "Tinta.preferredNightTheme")
+            applyWindowAppearance()
+        }
+    }
+    @Published public var preferredDayTheme: EditorTheme = .parchment
+    @Published public var preferredNightTheme: EditorTheme = .midnight
     @Published public var fontStyle: EditorFontStyle = .serif
     @Published public var fontSize: CGFloat = 17.0
     @Published public var lineSpacing: CGFloat = 7.0
     @Published public var editorColumnWidth: CGFloat = 680.0
     @Published public var typewriterScrolling: Bool = false
     @Published public var focusMode: FocusHighlightMode = .off
+
+    public var isNightMode: Bool {
+        theme.isDark
+    }
 
     // MARK: - Writing Sprint / Pomodoro Timer
     @Published public var isSprintActive: Bool = false
@@ -63,7 +81,20 @@ public final class BookStore: ObservableObject {
             let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             self.storageDirectoryURL = appSupport.appendingPathComponent("Tinta", isDirectory: true)
         }
+        if let savedDay = UserDefaults.standard.string(forKey: "Tinta.preferredDayTheme"),
+           let dayTheme = EditorTheme(rawValue: savedDay), !dayTheme.isDark {
+            self.preferredDayTheme = dayTheme
+        }
+        if let savedNight = UserDefaults.standard.string(forKey: "Tinta.preferredNightTheme"),
+           let nightTheme = EditorTheme(rawValue: savedNight), nightTheme.isDark {
+            self.preferredNightTheme = nightTheme
+        }
+        if let savedActive = UserDefaults.standard.string(forKey: "Tinta.activeTheme"),
+           let activeTheme = EditorTheme(rawValue: savedActive) {
+            self.theme = activeTheme
+        }
         loadLibrary()
+        applyWindowAppearance()
     }
 
     // MARK: - Computed Properties for Active Book
@@ -608,6 +639,25 @@ public final class BookStore: ObservableObject {
             NSSound.beep()
             showToast("Sprint concluído! +\(sprintWordsWritten) palavras escritas.")
         }
+    }
+
+    // MARK: - Night Mode & Appearance Management
+
+    public func toggleNightMode() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            if theme.isDark {
+                theme = preferredDayTheme
+                showToast("Modo Diurno ativado (\(theme.rawValue))")
+            } else {
+                theme = preferredNightTheme
+                showToast("Modo Noturno ativado (\(theme.rawValue))")
+            }
+        }
+    }
+
+    public func applyWindowAppearance() {
+        let targetAppearance = NSAppearance(named: theme.isDark ? .darkAqua : .aqua)
+        NSApplication.shared.appearance = targetAppearance
     }
 
     // MARK: - Helpers
