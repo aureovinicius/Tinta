@@ -195,14 +195,7 @@ public enum EditorTheme: String, Codable, CaseIterable, Identifiable {
     }
 
     public var dialogueNSColor: NSColor {
-        switch self {
-        case .parchment: return NSColor(calibratedRed: 0.20, green: 0.34, blue: 0.28, alpha: 1.0)
-        case .daylight: return NSColor(calibratedRed: 0.15, green: 0.38, blue: 0.36, alpha: 1.0)
-        case .sepia: return NSColor(calibratedRed: 0.24, green: 0.36, blue: 0.26, alpha: 1.0)
-        case .midnight: return NSColor(calibratedRed: 0.58, green: 0.78, blue: 0.68, alpha: 1.0)
-        case .amberNight: return NSColor(calibratedRed: 0.82, green: 0.72, blue: 0.52, alpha: 1.0)
-        case .obsidian: return NSColor(calibratedRed: 0.56, green: 0.84, blue: 0.78, alpha: 1.0)
-        }
+        textNSColor
     }
 
     public var mutedNSColor: NSColor {

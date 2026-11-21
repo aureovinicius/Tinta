@@ -388,7 +388,7 @@ public struct LiteraryMarkdownBlocksView: View {
                     } else {
                         Text(styledInlineAttributedString(for: (isDialogue ? "    " : "      ") + text))
                             .font(.custom(fontStyle.fontName, size: fontSize))
-                            .foregroundStyle(isDialogue ? Color(nsColor: theme.dialogueNSColor) : theme.textColor)
+                            .foregroundStyle(theme.textColor)
                             .lineSpacing(lineSpacing)
                             .fixedSize(horizontal: false, vertical: true)
                     }

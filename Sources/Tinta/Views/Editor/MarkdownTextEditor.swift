@@ -258,13 +258,6 @@ public struct MarkdownTextEditor: NSViewRepresentable {
                 .paragraphStyle: paragraphStyle
             ], range: fullRange)
 
-            // Dialogue lines (— ...)
-            Self.dialogueRegex.enumerateMatches(in: fullText, options: [], range: fullRange) { match, _, _ in
-                guard let range = match?.range else { return }
-                let color = isFocusEnabled ? parent.theme.mutedNSColor : parent.theme.dialogueNSColor
-                storage.addAttribute(.foregroundColor, value: color, range: range)
-            }
-
             // Blockquotes (> ...)
             Self.blockquoteRegex.enumerateMatches(in: fullText, options: [], range: fullRange) { match, _, _ in
                 guard let range = match?.range else { return }

@@ -200,58 +200,58 @@ public struct ExportBookSheet: View {
             Divider()
 
             HStack(alignment: .top, spacing: 20) {
-                // Left Column: Format & Options
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("Formato de Saída")
-                        .font(.subheadline.bold())
+                // Left Column: Format & Options (Scrollable so it never clips)
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Formato de Saída")
+                            .font(.subheadline.bold())
 
-                    ForEach(ExportFormat.allCases) { fmt in
-                        Button {
-                            selectedFormat = fmt
-                        } label: {
-                            HStack(alignment: .top, spacing: 10) {
-                                Image(systemName: selectedFormat == fmt ? "largecircle.fill.circle" : "circle")
-                                    .foregroundStyle(selectedFormat == fmt ? Color.accentColor : .secondary)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(fmt.rawValue)
-                                        .font(.caption.weight(.semibold))
-                                    Text(fmt.description)
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
+                        ForEach(ExportFormat.allCases) { fmt in
+                            Button {
+                                selectedFormat = fmt
+                            } label: {
+                                HStack(alignment: .top, spacing: 8) {
+                                    Image(systemName: selectedFormat == fmt ? "largecircle.fill.circle" : "circle")
+                                        .foregroundStyle(selectedFormat == fmt ? Color.accentColor : .secondary)
+                                        .padding(.top, 1)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(fmt.rawValue)
+                                            .font(.caption.weight(.semibold))
+                                        Text(fmt.description)
+                                            .font(.system(size: 10.5))
+                                            .foregroundStyle(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
                                 }
+                                .padding(7)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(selectedFormat == fmt ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.035))
+                                )
                             }
-                            .padding(8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(selectedFormat == fmt ? Color.accentColor.opacity(0.1) : Color.primary.opacity(0.03))
-                            )
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
+
+                        Divider().padding(.vertical, 2)
+
+                        Text("Opções Editoriais")
+                            .font(.subheadline.bold())
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Toggle("Incluir Folha de Rosto", isOn: $options.includeTitlePage)
+                            Toggle("Incluir Epígrafe", isOn: $options.includeEpigraph)
+                            Toggle("Gerar Sumário dos Capítulos", isOn: $options.includeTableOfContents)
+                            Toggle("Divisórias de Ato / Parte", isOn: $options.includePartDividers)
+                            Toggle("Subtítulos dos Capítulos", isOn: $options.includeChapterSubtitles)
+                            Toggle("Capitulares (Drop Caps) em HTML/PDF", isOn: $options.dropCaps)
+                            Toggle("Anexar Apêndice da Bíblia da História", isOn: $options.includeStoryBibleAppendix)
+                        }
+                        .font(.caption)
                     }
-
-                    Divider()
-
-                    Text("Opções Editoriais")
-                        .font(.subheadline.bold())
-
-                    Toggle("Incluir Folha de Rosto", isOn: $options.includeTitlePage)
-                        .font(.caption)
-                    Toggle("Incluir Epígrafe", isOn: $options.includeEpigraph)
-                        .font(.caption)
-                    Toggle("Gerar Sumário dos Capítulos", isOn: $options.includeTableOfContents)
-                        .font(.caption)
-                    Toggle("Divisórias de Ato / Parte", isOn: $options.includePartDividers)
-                        .font(.caption)
-                    Toggle("Subtítulos dos Capítulos", isOn: $options.includeChapterSubtitles)
-                        .font(.caption)
-                    Toggle("Capitulares (Drop Caps) em HTML/PDF", isOn: $options.dropCaps)
-                        .font(.caption)
-                    Toggle("Anexar Apêndice da Bíblia da História", isOn: $options.includeStoryBibleAppendix)
-                        .font(.caption)
+                    .padding(.trailing, 4)
                 }
-                .frame(width: 280)
+                .frame(width: 300)
 
                 // Right Column: Live Manuscript Preview
                 VStack(alignment: .leading, spacing: 8) {
@@ -279,12 +279,15 @@ public struct ExportBookSheet: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(12)
                     }
+                    .frame(maxHeight: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
                             .fill(Color(nsColor: .textBackgroundColor))
                     )
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .frame(maxHeight: .infinity)
 
             Divider()
 
@@ -300,7 +303,7 @@ public struct ExportBookSheet: View {
             }
         }
         .padding(22)
-        .frame(width: 760, height: 590)
+        .frame(minWidth: 780, idealWidth: 820, minHeight: 620, idealHeight: 650)
     }
 
     private func performExport(book: BookProject) {
