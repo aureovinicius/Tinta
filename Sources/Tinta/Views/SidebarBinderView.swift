@@ -67,13 +67,23 @@ public struct SidebarBinderView: View {
                                     chapterRow(for: chap)
                                 }
                             } label: {
-                                HStack {
+                                HStack(spacing: 6) {
                                     Image(systemName: "folder.fill")
                                         .foregroundStyle(store.theme.accentColor)
                                     Text(part.title)
                                         .font(.caption.weight(.bold))
                                         .lineLimit(1)
                                     Spacer()
+                                    Button {
+                                        store.presentEditPartSheet(id: part.id)
+                                    } label: {
+                                        Image(systemName: "pencil")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Renomear ou editar \(part.title)")
+
                                     Button {
                                         _ = store.addChapter(in: part.id)
                                     } label: {
@@ -85,11 +95,21 @@ public struct SidebarBinderView: View {
                                     .help("Novo capítulo em \(part.title)")
                                 }
                                 .contextMenu {
+                                    Button("Renomear / Editar Ato...") {
+                                        store.presentEditPartSheet(id: part.id)
+                                    }
                                     Button("Novo Capítulo neste Ato") {
                                         _ = store.addChapter(in: part.id)
                                     }
                                     Button("Ver Fichas deste Ato") {
                                         store.selection = .partOverview(part.id)
+                                    }
+                                    Divider()
+                                    Button("Mover Ato para Cima") {
+                                        store.movePart(part.id, direction: -1)
+                                    }
+                                    Button("Mover Ato para Baixo") {
+                                        store.movePart(part.id, direction: 1)
                                     }
                                     Divider()
                                     Button("Remover Ato (manter capítulos)", role: .destructive) {
@@ -107,10 +127,18 @@ public struct SidebarBinderView: View {
                         }
                     }
                 } header: {
-                    HStack {
+                    HStack(spacing: 8) {
                         Text("MANUSCRITO")
                             .font(.system(size: 10, weight: .bold))
                         Spacer()
+                        Button {
+                            store.presentNewPartSheet()
+                        } label: {
+                            Image(systemName: "folder.badge.plus")
+                        }
+                        .buttonStyle(.plain)
+                        .help("Novo Ato / Parte (⇧⌘N)")
+
                         Button {
                             _ = store.addChapter()
                         } label: {
@@ -259,9 +287,9 @@ public struct SidebarBinderView: View {
                         Label("Novo Capítulo", systemImage: "doc.badge.plus")
                     }
                     Button {
-                        store.addPart(title: "Ato \(book.parts.count + 1)")
+                        store.presentNewPartSheet()
                     } label: {
-                        Label("Novo Ato / Parte", systemImage: "folder.badge.plus")
+                        Label("Novo Ato / Parte...", systemImage: "folder.badge.plus")
                     }
                     Divider()
                     Button {

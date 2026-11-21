@@ -64,11 +64,32 @@ public struct CorkboardView: View {
                     }
                 }
                 .frame(maxWidth: 220)
+
+                if let activeFilterPartId = selectedPartFilter {
+                    Button {
+                        store.presentEditPartSheet(id: activeFilterPartId)
+                    } label: {
+                        Image(systemName: "pencil")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help("Renomear ou editar este Ato")
+                }
             } else if let pId = filterPartId,
                       let part = store.currentBook.parts.first(where: { $0.id == pId }) {
-                Text(part.title)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(store.theme.accentColor)
+                HStack(spacing: 8) {
+                    Text(part.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(store.theme.accentColor)
+                    Button {
+                        store.presentEditPartSheet(id: part.id)
+                    } label: {
+                        Label("Renomear Ato", systemImage: "pencil")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
             }
 
             Picker("Status", selection: $selectedStatusFilter) {

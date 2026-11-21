@@ -504,3 +504,104 @@ public struct QuickOpenSheet: View {
         .frame(width: 540, height: 390)
     }
 }
+
+// MARK: - 5. Create / Edit Act (BookPart) Sheet
+
+public struct PartEditorSheet: View {
+    @EnvironmentObject private var store: BookStore
+    @Environment(\.dismiss) private var dismiss
+
+    @ViewState private var title: String = ""
+    @ViewState private var subtitle: String = ""
+    @ViewState private var synopsis: String = ""
+
+    public init() {}
+
+    private var existingPart: BookPart? {
+        guard let id = store.editingPartId else { return nil }
+        return store.currentBook.parts.first(where: { $0.id == id })
+    }
+
+    private var isEditing: Bool {
+        existingPart != nil
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                Label(
+                    isEditing ? "Editar Ato / Parte" : "Novo Ato / Parte",
+                    systemImage: isEditing ? "folder.badge.gearshape" : "folder.badge.plus"
+                )
+                .font(.title3.bold())
+                Spacer()
+                Button("Fechar") { dismiss() }
+                    .buttonStyle(.borderless)
+            }
+
+            Divider()
+
+            Form {
+                Section("Identificação do Ato / Parte") {
+                    TextField("Nome do Ato (ex: Ato I — A Partida)", text: $title)
+                    TextField("Subtítulo do Ato (Opcional)", text: $subtitle)
+                }
+
+                Section("Sinopse / Objetivo Dramático do Ato") {
+                    TextEditor(text: $synopsis)
+                        .frame(height: 90)
+                }
+            }
+            .formStyle(.grouped)
+
+            HStack {
+                if let part = existingPart {
+                    Button("Remover Ato", role: .destructive) {
+                        store.deletePart(part.id)
+                        dismiss()
+                    }
+                }
+                Spacer()
+                Button("Cancelar") {
+                    dismiss()
+                }
+                Button(isEditing ? "Salvar Alterações" : "Criar Ato") {
+                    savePart()
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(22)
+        .frame(width: 480, height: 380)
+        .onAppear {
+            if let part = existingPart {
+                title = part.title
+                subtitle = part.subtitle
+                synopsis = part.synopsis
+            } else {
+                let nextNumber = store.currentBook.parts.count + 1
+                title = "Ato \(nextNumber)"
+                subtitle = ""
+                synopsis = ""
+            }
+        }
+    }
+
+    private func savePart() {
+        let cleanedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if var part = existingPart {
+            part.title = cleanedTitle.isEmpty ? part.title : cleanedTitle
+            part.subtitle = subtitle
+            part.synopsis = synopsis
+            store.updatePart(part)
+        } else {
+            _ = store.addPart(
+                title: cleanedTitle.isEmpty ? "Ato \(store.currentBook.parts.count + 1)" : cleanedTitle,
+                subtitle: subtitle,
+                synopsis: synopsis
+            )
+        }
+    }
+}

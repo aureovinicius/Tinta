@@ -64,6 +64,10 @@ public struct MainWorkspaceView: View {
             QuickOpenSheet()
                 .environmentObject(store)
         }
+        .sheet(isPresented: $store.showPartEditorSheet) {
+            PartEditorSheet()
+                .environmentObject(store)
+        }
     }
 
     // MARK: - Center Detail Workspace

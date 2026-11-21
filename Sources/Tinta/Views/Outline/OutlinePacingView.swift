@@ -23,9 +23,9 @@ public struct OutlinePacingView: View {
                         }
                         Spacer()
                         Button {
-                            store.addPart(title: "Ato \(book.parts.count + 1)")
+                            store.presentNewPartSheet()
                         } label: {
-                            Label("Novo Ato", systemImage: "folder.badge.plus")
+                            Label("Novo Ato...", systemImage: "folder.badge.plus")
                         }
                         .buttonStyle(.bordered)
 
@@ -203,7 +203,7 @@ public struct OutlinePacingView: View {
 
     private func partSectionView(part: BookPart, chapters: [ChapterItem]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
+            HStack(spacing: 10) {
                 Image(systemName: "folder.fill")
                     .foregroundStyle(store.theme.accentColor)
                 TextField("Título do Ato", text: Binding(
@@ -214,11 +214,9 @@ public struct OutlinePacingView: View {
                         store.updatePart(copy)
                     }
                 ))
-                .textFieldStyle(.plain)
+                .textFieldStyle(.roundedBorder)
                 .font(.headline)
-
-                Text("—")
-                    .foregroundStyle(.secondary)
+                .frame(maxWidth: 240)
 
                 TextField("Subtítulo do Ato...", text: Binding(
                     get: { part.subtitle },
@@ -228,9 +226,18 @@ public struct OutlinePacingView: View {
                         store.updatePart(copy)
                     }
                 ))
-                .textFieldStyle(.plain)
-                .font(.subheadline.italic())
-                .foregroundStyle(.secondary)
+                .textFieldStyle(.roundedBorder)
+                .font(.subheadline)
+                .frame(maxWidth: 260)
+
+                Button {
+                    store.presentEditPartSheet(id: part.id)
+                } label: {
+                    Label("Editar Ato", systemImage: "pencil")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
 
                 Spacer()
 

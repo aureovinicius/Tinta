@@ -100,18 +100,40 @@ public struct InspectorSidebarView: View {
                     }
                 }
 
-                Picker("Ato / Parte", selection: Binding(
-                    get: { chapter.partId },
-                    set: { val in
-                        var copy = chapter
-                        copy.partId = val
-                        store.updateChapter(copy)
+                HStack(spacing: 6) {
+                    Picker("Ato / Parte", selection: Binding(
+                        get: { chapter.partId },
+                        set: { val in
+                            var copy = chapter
+                            copy.partId = val
+                            store.updateChapter(copy)
+                        }
+                    )) {
+                        Text("Sem Ato").tag(UUID?.none)
+                        ForEach(store.currentBook.sortedParts) { part in
+                            Text(part.title).tag(UUID?.some(part.id))
+                        }
                     }
-                )) {
-                    Text("Sem Ato").tag(UUID?.none)
-                    ForEach(store.currentBook.sortedParts) { part in
-                        Text(part.title).tag(UUID?.some(part.id))
+
+                    if let partId = chapter.partId {
+                        Button {
+                            store.presentEditPartSheet(id: partId)
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .help("Renomear ou editar este Ato")
                     }
+
+                    Button {
+                        store.presentNewPartSheet()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help("Criar Novo Ato")
                 }
 
                 Toggle("Incluir na Compilação do Livro", isOn: Binding(

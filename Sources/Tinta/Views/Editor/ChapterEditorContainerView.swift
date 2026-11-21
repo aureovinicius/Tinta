@@ -84,15 +84,57 @@ public struct ChapterEditorContainerView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .frame(maxWidth: 280)
 
-                if let partId = chapter.partId,
-                   let part = store.currentBook.parts.first(where: { $0.id == partId }) {
-                    Text(part.title)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(Color.secondary.opacity(0.12))
-                        .clipShape(Capsule())
+                // Act / Part Interactive Menu Pill
+                Menu {
+                    Section("Mover Capítulo para Ato") {
+                        Button("Sem Ato") {
+                            var updated = chapter
+                            updated.partId = nil
+                            store.updateChapter(updated)
+                        }
+                        ForEach(store.currentBook.sortedParts) { p in
+                            Button {
+                                var updated = chapter
+                                updated.partId = p.id
+                                store.updateChapter(updated)
+                            } label: {
+                                HStack {
+                                    Text(p.title)
+                                    if chapter.partId == p.id {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Divider()
+                    if let currentPartId = chapter.partId {
+                        Button {
+                            store.presentEditPartSheet(id: currentPartId)
+                        } label: {
+                            Label("Renomear / Editar Este Ato...", systemImage: "pencil")
+                        }
+                    }
+                    Button {
+                        store.presentNewPartSheet()
+                    } label: {
+                        Label("Novo Ato / Parte...", systemImage: "folder.badge.plus")
+                    }
+                } label: {
+                    let partTitle = store.currentBook.parts.first(where: { $0.id == chapter.partId })?.title ?? "Sem Ato"
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder")
+                        Text(partTitle)
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.secondary.opacity(0.12))
+                    .clipShape(Capsule())
                 }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help("Trocar, renomear ou criar Ato / Parte")
 
                 Spacer()
 

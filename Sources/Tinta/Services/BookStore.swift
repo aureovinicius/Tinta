@@ -19,6 +19,8 @@ public final class BookStore: ObservableObject {
     @Published public var showExportSheet: Bool = false
     @Published public var showQuickOpenSheet: Bool = false
     @Published public var showNewBookSheet: Bool = false
+    @Published public var showPartEditorSheet: Bool = false
+    @Published public var editingPartId: UUID? = nil
     @Published public var statusBannerMessage: String? = nil
 
     // MARK: - Editor Typography & Appearance Preferences
@@ -264,20 +266,54 @@ public final class BookStore: ObservableObject {
 
     // MARK: - Parts (Acts) Operations
 
-    public func addPart(title: String = "Novo Ato / Parte") {
+    public func presentNewPartSheet() {
+        editingPartId = nil
+        showPartEditorSheet = true
+    }
+
+    public func presentEditPartSheet(id: UUID) {
+        editingPartId = id
+        showPartEditorSheet = true
+    }
+
+    @discardableResult
+    public func addPart(title: String = "Novo Ato / Parte", subtitle: String = "", synopsis: String = "") -> BookPart {
         var book = currentBook
         let nextOrder = (book.parts.map(\.order).max() ?? -1) + 1
-        let newPart = BookPart(title: title, subtitle: "", order: nextOrder)
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalTitle = trimmedTitle.isEmpty ? "Ato \(book.parts.count + 1)" : trimmedTitle
+        let newPart = BookPart(title: finalTitle, subtitle: subtitle, synopsis: synopsis, order: nextOrder)
         book.parts.append(newPart)
         currentBook = book
         selection = .partOverview(newPart.id)
-        showToast("Adicionado: \(title)")
+        showToast("Ato criado: \(finalTitle)")
+        return newPart
     }
 
     public func updatePart(_ part: BookPart) {
         var book = currentBook
         if let idx = book.parts.firstIndex(where: { $0.id == part.id }) {
             book.parts[idx] = part
+            currentBook = book
+            showToast("Ato atualizado: \(part.title)")
+        }
+    }
+
+    public func movePart(_ id: UUID, direction: Int) {
+        var book = currentBook
+        let sorted = book.sortedParts
+        guard let currentIdx = sorted.firstIndex(where: { $0.id == id }) else { return }
+        let targetIdx = currentIdx + direction
+        guard targetIdx >= 0 && targetIdx < sorted.count else { return }
+
+        let currentPart = sorted[currentIdx]
+        let neighborPart = sorted[targetIdx]
+
+        if let p1 = book.parts.firstIndex(where: { $0.id == currentPart.id }),
+           let p2 = book.parts.firstIndex(where: { $0.id == neighborPart.id }) {
+            let tempOrder = book.parts[p1].order
+            book.parts[p1].order = book.parts[p2].order
+            book.parts[p2].order = tempOrder
             currentBook = book
         }
     }

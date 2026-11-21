@@ -84,8 +84,8 @@ public struct TintaApp: App {
             }
             .keyboardShortcut("n", modifiers: [.command])
 
-            Button("Novo Ato / Parte") {
-                store.addPart(title: "Ato \(store.currentBook.parts.count + 1)")
+            Button("Novo Ato / Parte...") {
+                store.presentNewPartSheet()
             }
             .keyboardShortcut("n", modifiers: [.command, .shift])
 
