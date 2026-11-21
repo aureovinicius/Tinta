@@ -132,4 +132,18 @@ struct TintaTests {
         #expect(store.isNightMode)
         #expect(store.theme == .amberNight)
     }
+
+    @Test("Formatação de negrito em listas com marcadores, listas numeradas e itálicos aninhados")
+    func testBoldInListsAndNestedItalics() {
+        let line1 = "* **Categorias intermediárias:** Uso de prefixos como *Super-*, *Sub-* e *Infra-* (ex.: Subclasse *Theria*)."
+        let html1 = TextAnalytics.formatInlineMarkdown(line1)
+        #expect(html1.contains("<strong>Categorias intermediárias:</strong>"))
+        #expect(html1.contains("<em>Super-</em>"))
+        #expect(html1.contains("<em>Theria</em>"))
+
+        let line2 = "13. **Cetacea** *(frequentemente unida a Artiodactyla em **Cetartiodactyla**)*: Baleias."
+        let html2 = TextAnalytics.formatInlineMarkdown(line2)
+        #expect(html2.contains("<strong>Cetacea</strong>"))
+        #expect(html2.contains("<strong>Cetartiodactyla</strong>"))
+    }
 }

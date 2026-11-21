@@ -137,8 +137,9 @@ public struct MarkdownTextEditor: NSViewRepresentable {
         private static let heading3Regex = try! NSRegularExpression(pattern: "^###\\s+.*$", options: [.anchorsMatchLines])
         private static let blockquoteRegex = try! NSRegularExpression(pattern: "^>\\s*.*$", options: [.anchorsMatchLines])
         private static let dialogueRegex = try! NSRegularExpression(pattern: "^(—|–|--)\\s*.*$", options: [.anchorsMatchLines])
-        private static let boldRegex = try! NSRegularExpression(pattern: "\\*\\*(.+?)\\*\\*", options: [])
-        private static let italicRegex = try! NSRegularExpression(pattern: "(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)", options: [])
+        private static let boldRegex = try! NSRegularExpression(pattern: "\\*\\*(?=\\S)(.+?)(?<=\\S)\\*\\*", options: [])
+        private static let italicRegex = try! NSRegularExpression(pattern: "(?<!\\*)\\*(?![\\*\\s])([^\\n]+?)(?<![\\*\\s])\\*(?!\\*)", options: [])
+        private static let boldItalicRegex = try! NSRegularExpression(pattern: "\\*\\*\\*(?=\\S)(.+?)(?<=\\S)\\*\\*\\*", options: [])
         private static let wikilinkRegex = try! NSRegularExpression(pattern: "\\[\\[([^\\]]+)\\]\\]", options: [])
         private static let commentRegex = try! NSRegularExpression(pattern: "%%.*?%%", options: [.dotMatchesLineSeparators])
         private static let sceneBreakRegex = try! NSRegularExpression(pattern: "^(\\* \\* \\*|\\*\\*\\*|---)$", options: [.anchorsMatchLines])
@@ -239,6 +240,7 @@ public struct MarkdownTextEditor: NSViewRepresentable {
             let baseFont = parent.fontStyle.nsFont(size: parent.fontSize)
             let boldFont = parent.fontStyle.nsFont(size: parent.fontSize, weight: .bold)
             let italicFont = parent.fontStyle.nsFont(size: parent.fontSize, italic: true)
+            let boldItalicFont = parent.fontStyle.nsFont(size: parent.fontSize, weight: .bold, italic: true)
             let h1Font = parent.fontStyle.nsFont(size: parent.fontSize * 1.65, weight: .bold)
             let h2Font = parent.fontStyle.nsFont(size: parent.fontSize * 1.35, weight: .bold)
             let h3Font = parent.fontStyle.nsFont(size: parent.fontSize * 1.15, weight: .bold)
@@ -267,16 +269,24 @@ public struct MarkdownTextEditor: NSViewRepresentable {
                 }
             }
 
-            // Bold (**...**)
-            Self.boldRegex.enumerateMatches(in: fullText, options: [], range: fullRange) { match, _, _ in
-                guard let range = match?.range else { return }
-                storage.addAttribute(.font, value: boldFont, range: range)
-            }
-
-            // Italic (*...*)
+            // Italic (*...*) first so nested **bold** inside *italic* can upgrade to boldItalicFont
             Self.italicRegex.enumerateMatches(in: fullText, options: [], range: fullRange) { match, _, _ in
                 guard let range = match?.range else { return }
                 storage.addAttribute(.font, value: italicFont, range: range)
+            }
+
+            // Bold (**...**)
+            Self.boldRegex.enumerateMatches(in: fullText, options: [], range: fullRange) { match, _, _ in
+                guard let range = match?.range else { return }
+                let existingFont = storage.attribute(.font, at: range.location, effectiveRange: nil) as? NSFont
+                let isAlreadyItalic = existingFont == italicFont
+                storage.addAttribute(.font, value: isAlreadyItalic ? boldItalicFont : boldFont, range: range)
+            }
+
+            // Bold + Italic (***...***)
+            Self.boldItalicRegex.enumerateMatches(in: fullText, options: [], range: fullRange) { match, _, _ in
+                guard let range = match?.range else { return }
+                storage.addAttribute(.font, value: boldItalicFont, range: range)
             }
 
             // WikiLinks ([[...]])

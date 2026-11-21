@@ -224,11 +224,13 @@ public enum TextAnalytics {
             escaped = "—" + String(escaped.dropFirst(2))
         }
 
+        // Bold+Italic ***text***
+        escaped = applyRegex(escaped, pattern: "\\*\\*\\*(?=\\S)(.+?)(?<=\\S)\\*\\*\\*", template: "<strong><em>$1</em></strong>")
         // Bold **text**
-        escaped = applyRegex(escaped, pattern: "\\*\\*(.+?)\\*\\*", template: "<strong>$1</strong>")
+        escaped = applyRegex(escaped, pattern: "\\*\\*(?=\\S)(.+?)(?<=\\S)\\*\\*", template: "<strong>$1</strong>")
         // Italic *text* or _text_
-        escaped = applyRegex(escaped, pattern: "(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)", template: "<em>$1</em>")
-        escaped = applyRegex(escaped, pattern: "_(.+?)_", template: "<em>$1</em>")
+        escaped = applyRegex(escaped, pattern: "(?<!\\*)\\*(?![\\*\\s])(.+?)(?<![\\*\\s])\\*(?!\\*)", template: "<em>$1</em>")
+        escaped = applyRegex(escaped, pattern: "(?<!_)_(?![_\\s])(.+?)(?<![_\\s])_(?!_)", template: "<em>$1</em>")
         //Inline code `code`
         escaped = applyRegex(escaped, pattern: "`([^`]+)`", template: "<code>$1</code>")
         // WikiLinks [[Entity]]
