@@ -40,6 +40,7 @@
    - **Sprint de Escrita (Pomodoro Literário 25 min)**: Cronômetro integrado na barra inferior que contabiliza quantas palavras novas foram escritas durante a sessão.
 
 5. **Compilação e Exportação (`⇧⌘E`)**
+   - **eBook EPUB 3 para Kindle / Apple Books (`.epub`)** com pacote OPF, sumário interativo (`nav.xhtml` + `toc.ncx`), capítulos XHTML, listas e tabelas formatadas para *Send to Kindle* e *Amazon KDP*.
    - **Manuscrito Markdown Único (`.md`)** com metadados YAML, folha de rosto, epígrafe e sumário.
    - **Livro Tipográfico HTML5 (`.html`)** com CSS editorial, capitulares (*drop caps*) e formatação pronta para impressão.
    - **Livro Diagramado em PDF (`.pdf`)** paginado nativamente em A4.

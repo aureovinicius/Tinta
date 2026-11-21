@@ -132,67 +132,139 @@ public enum TextAnalytics {
         return headings
     }
 
-    /// Converts Markdown text into literary HTML paragraphs for the Typeset Book Preview and HTML/PDF export
+    private static let numberedListLineRegex = try! NSRegularExpression(pattern: "^(\\d+)\\.\\s+(.*)$")
+
+    /// Converts Markdown text into literary HTML/XHTML paragraphs, lists, and tables for Preview, HTML, PDF, and EPUB export
     public static func markdownToLiteraryHTML(_ markdown: String, dropCapFirstParagraph: Bool = true) -> String {
         let lines = markdown.components(separatedBy: .newlines)
         var htmlParts: [String] = []
         var isFirstBodyParagraph = dropCapFirstParagraph
         var inBlockquote = false
+        var inUl = false
+        var inOl = false
 
-        func closeBlockquoteIfNeeded() {
+        func closeOpenContainers() {
             if inBlockquote {
                 htmlParts.append("</blockquote>")
                 inBlockquote = false
             }
+            if inUl {
+                htmlParts.append("</ul>")
+                inUl = false
+            }
+            if inOl {
+                htmlParts.append("</ol>")
+                inOl = false
+            }
         }
 
-        for rawLine in lines {
-            let trimmed = rawLine.trimmingCharacters(in: .whitespaces)
+        var idx = 0
+        while idx < lines.count {
+            let trimmed = lines[idx].trimmingCharacters(in: .whitespaces)
             if trimmed.isEmpty {
-                closeBlockquoteIfNeeded()
+                closeOpenContainers()
+                idx += 1
                 continue
             }
 
             // Ignore editor comments %% ... %%
             if trimmed.hasPrefix("%%") && trimmed.hasSuffix("%%") {
+                idx += 1
                 continue
             }
 
             if trimmed == "* * *" || trimmed == "***" || trimmed == "---" {
-                closeBlockquoteIfNeeded()
+                closeOpenContainers()
                 htmlParts.append("<div class=\"scene-break\">⁂</div>")
                 isFirstBodyParagraph = false
+                idx += 1
                 continue
             }
 
             if trimmed.hasPrefix("### ") {
-                closeBlockquoteIfNeeded()
+                closeOpenContainers()
                 let content = formatInlineMarkdown(String(trimmed.dropFirst(4)))
                 htmlParts.append("<h3>\(content)</h3>")
+                idx += 1
                 continue
             } else if trimmed.hasPrefix("## ") {
-                closeBlockquoteIfNeeded()
+                closeOpenContainers()
                 let content = formatInlineMarkdown(String(trimmed.dropFirst(3)))
                 htmlParts.append("<h2>\(content)</h2>")
+                idx += 1
                 continue
             } else if trimmed.hasPrefix("# ") {
-                closeBlockquoteIfNeeded()
+                closeOpenContainers()
                 let content = formatInlineMarkdown(String(trimmed.dropFirst(2)))
                 htmlParts.append("<h1>\(content)</h1>")
+                idx += 1
+                continue
+            }
+
+            // Markdown Tables
+            if trimmed.hasPrefix("|") && trimmed.hasSuffix("|") {
+                closeOpenContainers()
+                var tableLines: [String] = []
+                while idx < lines.count {
+                    let tLine = lines[idx].trimmingCharacters(in: .whitespaces)
+                    if tLine.hasPrefix("|") && tLine.hasSuffix("|") {
+                        tableLines.append(tLine)
+                        idx += 1
+                    } else {
+                        break
+                    }
+                }
+                htmlParts.append(renderTableHTML(from: tableLines))
+                isFirstBodyParagraph = false
+                continue
+            }
+
+            // Bullet list (* or - or •)
+            if trimmed.hasPrefix("* ") || trimmed.hasPrefix("- ") || trimmed.hasPrefix("• ") {
+                if inBlockquote { htmlParts.append("</blockquote>"); inBlockquote = false }
+                if inOl { htmlParts.append("</ol>"); inOl = false }
+                if !inUl {
+                    htmlParts.append("<ul>")
+                    inUl = true
+                }
+                let itemContent = formatInlineMarkdown(String(trimmed.dropFirst(2)).trimmingCharacters(in: .whitespaces))
+                htmlParts.append("<li>\(itemContent)</li>")
+                isFirstBodyParagraph = false
+                idx += 1
+                continue
+            }
+
+            // Numbered list (1. , 2. , etc.)
+            let nsTrimmed = trimmed as NSString
+            if let match = numberedListLineRegex.firstMatch(in: trimmed, range: NSRange(location: 0, length: nsTrimmed.length)),
+               match.numberOfRanges == 3 {
+                if inBlockquote { htmlParts.append("</blockquote>"); inBlockquote = false }
+                if inUl { htmlParts.append("</ul>"); inUl = false }
+                if !inOl {
+                    htmlParts.append("<ol>")
+                    inOl = true
+                }
+                let itemContent = formatInlineMarkdown(nsTrimmed.substring(with: match.range(at: 2)))
+                htmlParts.append("<li>\(itemContent)</li>")
+                isFirstBodyParagraph = false
+                idx += 1
                 continue
             }
 
             if trimmed.hasPrefix("> ") || trimmed == ">" {
+                if inUl { htmlParts.append("</ul>"); inUl = false }
+                if inOl { htmlParts.append("</ol>"); inOl = false }
                 if !inBlockquote {
                     htmlParts.append("<blockquote>")
                     inBlockquote = true
                 }
                 let quoteText = trimmed.hasPrefix("> ") ? String(trimmed.dropFirst(2)) : ""
                 htmlParts.append("<p>\(formatInlineMarkdown(quoteText))</p>")
+                idx += 1
                 continue
             }
 
-            closeBlockquoteIfNeeded()
+            closeOpenContainers()
 
             let formatted = formatInlineMarkdown(trimmed)
             let isDialogue = trimmed.hasPrefix("—") || trimmed.hasPrefix("–") || trimmed.hasPrefix("--")
@@ -205,10 +277,41 @@ public enum TextAnalytics {
             } else {
                 htmlParts.append("<p>\(formatted)</p>")
             }
+            idx += 1
         }
 
-        closeBlockquoteIfNeeded()
+        closeOpenContainers()
         return htmlParts.joined(separator: "\n")
+    }
+
+    private static func renderTableHTML(from lines: [String]) -> String {
+        guard !lines.isEmpty else { return "" }
+        func splitCells(_ line: String) -> [String] {
+            var inner = line
+            if inner.hasPrefix("|") { inner.removeFirst() }
+            if inner.hasSuffix("|") { inner.removeLast() }
+            return inner.components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }
+        }
+        let headerCells = splitCells(lines[0])
+        var html: [String] = ["<table class=\"md-table\">", "<thead><tr>"]
+        for cell in headerCells {
+            html.append("<th>\(formatInlineMarkdown(cell))</th>")
+        }
+        html.append("</tr></thead>")
+        html.append("<tbody>")
+        for (i, line) in lines.enumerated() where i > 0 {
+            let cells = splitCells(line)
+            let isSeparator = cells.allSatisfy { c in !c.isEmpty && c.allSatisfy { $0 == "-" || $0 == ":" || $0 == " " } }
+            if isSeparator { continue }
+            html.append("<tr>")
+            for colIdx in 0..<headerCells.count {
+                let cellText = colIdx < cells.count ? cells[colIdx] : ""
+                html.append("<td>\(formatInlineMarkdown(cellText))</td>")
+            }
+            html.append("</tr>")
+        }
+        html.append("</tbody></table>")
+        return html.joined(separator: "\n")
     }
 
     public static func formatInlineMarkdown(_ text: String) -> String {

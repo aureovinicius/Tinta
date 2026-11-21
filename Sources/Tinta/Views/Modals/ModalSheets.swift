@@ -174,7 +174,7 @@ public struct ExportBookSheet: View {
     @EnvironmentObject private var store: BookStore
     @Environment(\.dismiss) private var dismiss
 
-    @ViewState private var selectedFormat: ExportFormat = .compiledMarkdown
+    @ViewState private var selectedFormat: ExportFormat = .epubBook
     @ViewState private var options = ExportOptions()
 
     public init() {}
@@ -310,6 +310,21 @@ public struct ExportBookSheet: View {
         let baseFilename = BookExporter.sanitizeFilename(book.title)
 
         switch selectedFormat {
+        case .epubBook:
+            let savePanel = NSSavePanel()
+            savePanel.title = "Exportar eBook EPUB para Kindle / Apple Books"
+            savePanel.nameFieldStringValue = "\(baseFilename).epub"
+            savePanel.canCreateDirectories = true
+            if savePanel.runModal() == .OK, let url = savePanel.url {
+                do {
+                    try BookExporter.exportEPUB(book: book, options: options, to: url)
+                    store.showToast("eBook EPUB salvo em \(url.lastPathComponent)")
+                    dismiss()
+                } catch {
+                    store.showToast("Erro ao exportar EPUB: \(error.localizedDescription)")
+                }
+            }
+
         case .compiledMarkdown:
             let savePanel = NSSavePanel()
             savePanel.title = "Exportar Manuscrito Markdown"

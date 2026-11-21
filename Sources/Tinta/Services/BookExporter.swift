@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 
 public enum ExportFormat: String, CaseIterable, Identifiable {
+    case epubBook = "eBook EPUB para Kindle / Apple Books (.epub)"
     case compiledMarkdown = "Manuscrito Markdown Único (.md)"
     case htmlBook = "Livro Tipográfico HTML (.html)"
     case pdfBook = "Livro Diagramado em PDF (.pdf)"
@@ -11,6 +12,8 @@ public enum ExportFormat: String, CaseIterable, Identifiable {
 
     public var description: String {
         switch self {
+        case .epubBook:
+            return "Gera um eBook padrão EPUB 3 pronto para leitura no Kindle (Send to Kindle / Amazon KDP), Apple Books e Kobo, com sumário interativo e capítulos."
         case .compiledMarkdown:
             return "Gera um único arquivo .md com metadados YAML, folha de rosto, sumário e todos os capítulos marcados para compilação."
         case .htmlBook:
@@ -24,6 +27,7 @@ public enum ExportFormat: String, CaseIterable, Identifiable {
 
     public var fileExtension: String {
         switch self {
+        case .epubBook: return "epub"
         case .compiledMarkdown: return "md"
         case .htmlBook: return "html"
         case .pdfBook: return "pdf"
@@ -656,6 +660,456 @@ public enum BookExporter {
         printOp.showsPrintPanel = false
         printOp.showsProgressPanel = false
         _ = printOp.run()
+    }
+
+    /// Generates a standards-compliant EPUB 3 eBook (.epub) compatible with Amazon Kindle (Send to Kindle / KDP), Apple Books, and Kobo
+    public static func exportEPUB(book: BookProject, options: ExportOptions = ExportOptions(), to fileURL: URL) throws {
+        let fm = FileManager.default
+        let stagingDir = fm.temporaryDirectory.appendingPathComponent("TintaEPUB_\(UUID().uuidString)", isDirectory: true)
+        let metaInfDir = stagingDir.appendingPathComponent("META-INF", isDirectory: true)
+        let oebpsDir = stagingDir.appendingPathComponent("OEBPS", isDirectory: true)
+
+        defer {
+            try? fm.removeItem(at: stagingDir)
+        }
+
+        try fm.createDirectory(at: metaInfDir, withIntermediateDirectories: true)
+        try fm.createDirectory(at: oebpsDir, withIntermediateDirectories: true)
+
+        // 1. mimetype (must be plain ASCII without trailing newline)
+        let mimetypeURL = stagingDir.appendingPathComponent("mimetype")
+        try "application/epub+zip".write(to: mimetypeURL, atomically: true, encoding: .ascii)
+
+        // 2. META-INF/container.xml
+        let containerXML = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+            <rootfiles>
+                <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+            </rootfiles>
+        </container>
+        """
+        try containerXML.write(to: metaInfDir.appendingPathComponent("container.xml"), atomically: true, encoding: .utf8)
+
+        // 3. OEBPS/style.css (Kindle & eReader optimized stylesheet)
+        let styleCSS = """
+        body {
+            font-family: Georgia, Palatino, "Bookerly", serif;
+            line-height: 1.65;
+            margin: 4%;
+        }
+        h1, h2, h3 {
+            font-family: Georgia, Palatino, "Bookerly", serif;
+            line-height: 1.25;
+            page-break-after: avoid;
+        }
+        .title-page {
+            text-align: center;
+            margin-top: 18%;
+            page-break-after: always;
+        }
+        .genre-badge {
+            font-size: 0.78em;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            margin-bottom: 1.2em;
+        }
+        .book-title {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin: 0.2em 0;
+        }
+        .book-subtitle {
+            font-size: 1.15em;
+            font-style: italic;
+            font-weight: normal;
+            margin: 0.4em 0 1.8em;
+        }
+        .title-ornament {
+            font-size: 1.4em;
+            margin: 1.2em 0;
+        }
+        .book-author {
+            font-size: 1.05em;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .epigraph-page {
+            margin-top: 15%;
+            padding: 0 8%;
+            font-style: italic;
+            text-align: right;
+            page-break-after: always;
+        }
+        .part-banner {
+            text-align: center;
+            padding: 1.8em 0;
+            margin-bottom: 1.8em;
+            border-top: 1px solid #888888;
+            border-bottom: 1px solid #888888;
+        }
+        .part-label {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+        }
+        .chapter-header {
+            text-align: center;
+            margin: 1.5em 0 2.2em;
+        }
+        .chapter-number {
+            font-size: 0.78em;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            margin-bottom: 0.4em;
+        }
+        .chapter-title {
+            font-size: 1.65em;
+            margin: 0.2em 0;
+        }
+        .chapter-subtitle {
+            font-style: italic;
+            font-size: 0.95em;
+            margin: 0.3em 0 0;
+        }
+        p {
+            margin: 0 0 0.75em;
+            text-align: justify;
+            text-indent: 1.4em;
+        }
+        p.first-paragraph {
+            text-indent: 0;
+        }
+        .drop-cap p.first-paragraph:first-letter {
+            font-size: 2.6em;
+            font-weight: bold;
+            float: left;
+            line-height: 0.85;
+            padding-right: 0.12em;
+        }
+        ul, ol {
+            margin: 0.8em 0 0.8em 1.6em;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 0.4em;
+            text-align: left;
+        }
+        blockquote {
+            margin: 1.2em 1.4em;
+            padding-left: 0.9em;
+            border-left: 2px solid #888888;
+            font-style: italic;
+        }
+        blockquote p {
+            text-indent: 0;
+        }
+        .scene-break {
+            text-align: center;
+            margin: 1.6em 0;
+            font-size: 1.15em;
+            letter-spacing: 0.25em;
+        }
+        table.md-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.2em 0;
+            font-size: 0.88em;
+        }
+        table.md-table th, table.md-table td {
+            border: 1px solid #888888;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        table.md-table th {
+            font-weight: bold;
+        }
+        nav#toc ol {
+            list-style-type: decimal;
+            padding-left: 1.4em;
+        }
+        nav#toc li {
+            margin-bottom: 0.5em;
+        }
+        nav#toc a {
+            text-decoration: none;
+        }
+        """
+        try styleCSS.write(to: oebpsDir.appendingPathComponent("style.css"), atomically: true, encoding: .utf8)
+
+        func wrapXHTML(title: String, bodyContent: String) -> String {
+            return """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE html>
+            <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="pt-BR" lang="pt-BR">
+            <head>
+                <meta charset="UTF-8" />
+                <title>\(escapeHTML(title))</title>
+                <link rel="stylesheet" type="text/css" href="style.css" />
+            </head>
+            <body>
+            \(bodyContent)
+            </body>
+            </html>
+            """
+        }
+
+        var manifestItems: [(id: String, href: String, mediaType: String, properties: String?)] = [
+            ("css", "style.css", "text/css", nil),
+            ("ncx", "toc.ncx", "application/x-dtbncx+xml", nil),
+            ("nav", "nav.xhtml", "application/xhtml+xml", "nav")
+        ]
+        var spineItemIds: [String] = []
+        var tocEntries: [(id: String, title: String, href: String)] = []
+
+        // 4. Optional Title Page
+        if options.includeTitlePage {
+            let subtitleHTML = !book.subtitle.isEmpty ? "<h2 class=\"book-subtitle\">\(escapeHTML(book.subtitle))</h2>" : ""
+            let titlePageBody = """
+            <section class="title-page" epub:type="titlepage">
+                <div class="genre-badge">\(escapeHTML(book.genre))</div>
+                <h1 class="book-title">\(escapeHTML(book.title))</h1>
+                \(subtitleHTML)
+                <div class="title-ornament">❦</div>
+                <p class="book-author" style="text-indent:0; text-align:center;">\(escapeHTML(book.author))</p>
+            </section>
+            """
+            try wrapXHTML(title: book.title, bodyContent: titlePageBody)
+                .write(to: oebpsDir.appendingPathComponent("titlepage.xhtml"), atomically: true, encoding: .utf8)
+            manifestItems.append(("titlepage", "titlepage.xhtml", "application/xhtml+xml", nil))
+            spineItemIds.append("titlepage")
+            tocEntries.append(("titlepage", "Folha de Rosto", "titlepage.xhtml"))
+        }
+
+        // 5. Optional Epigraph Page
+        if options.includeEpigraph && !book.epigraph.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let authorLine = !book.epigraphAuthor.isEmpty ? "<p style=\"text-indent:0; text-align:right;\">— \(escapeHTML(book.epigraphAuthor))</p>" : ""
+            let epigraphBody = """
+            <section class="epigraph-page" epub:type="epigraph">
+                <p style="text-indent:0; text-align:right;">“\(escapeHTML(book.epigraph))”</p>
+                \(authorLine)
+            </section>
+            """
+            try wrapXHTML(title: "Epígrafe", bodyContent: epigraphBody)
+                .write(to: oebpsDir.appendingPathComponent("epigraph.xhtml"), atomically: true, encoding: .utf8)
+            manifestItems.append(("epigraph", "epigraph.xhtml", "application/xhtml+xml", nil))
+            spineItemIds.append("epigraph")
+        }
+
+        // Include visible TOC in spine if requested
+        if options.includeTableOfContents {
+            spineItemIds.append("nav")
+        }
+
+        // 6. Chapters
+        let compilableChapters = book.activeChapters.filter { $0.includeInCompile }
+        var currentPartId: UUID? = nil
+
+        for (idx, chapter) in compilableChapters.enumerated() {
+            let chapNum = idx + 1
+            let fileId = String(format: "chapter-%02d", chapNum)
+            let fileName = "\(fileId).xhtml"
+
+            var partBannerHTML = ""
+            if options.includePartDividers, let pId = chapter.partId, pId != currentPartId {
+                currentPartId = pId
+                if let part = book.parts.first(where: { $0.id == pId }) {
+                    let partSub = !part.subtitle.isEmpty ? "<p style=\"text-indent:0; text-align:center; font-style:italic;\">\(escapeHTML(part.subtitle))</p>" : ""
+                    partBannerHTML = """
+                    <div class="part-banner">
+                        <div class="part-label">Parte / Ato</div>
+                        <h2>\(escapeHTML(part.title))</h2>
+                        \(partSub)
+                    </div>
+                    """
+                }
+            }
+
+            let cleanedBody = stripLeadingDuplicateHeading(from: chapter.content, title: chapter.title)
+            let bodyHTML = TextAnalytics.markdownToLiteraryHTML(cleanedBody, dropCapFirstParagraph: options.dropCaps)
+            let subtitleHTML = (options.includeChapterSubtitles && !chapter.subtitle.isEmpty)
+                ? "<p class=\"chapter-subtitle\" style=\"text-indent:0; text-align:center;\">\(escapeHTML(chapter.subtitle))</p>"
+                : ""
+            let dropCapClass = options.dropCaps ? " class=\"drop-cap\"" : ""
+
+            let chapterXHTMLBody = """
+            <article epub:type="chapter"\(dropCapClass)>
+                \(partBannerHTML)
+                <header class="chapter-header">
+                    <div class="chapter-number">Capítulo \(chapNum)</div>
+                    <h1 class="chapter-title">\(escapeHTML(chapter.title))</h1>
+                    \(subtitleHTML)
+                </header>
+                <div class="chapter-body">
+                    \(bodyHTML)
+                </div>
+            </article>
+            """
+
+            try wrapXHTML(title: "Capítulo \(chapNum): \(chapter.title)", bodyContent: chapterXHTMLBody)
+                .write(to: oebpsDir.appendingPathComponent(fileName), atomically: true, encoding: .utf8)
+
+            manifestItems.append((fileId, fileName, "application/xhtml+xml", nil))
+            spineItemIds.append(fileId)
+            tocEntries.append((fileId, "Capítulo \(chapNum): \(chapter.title)", fileName))
+        }
+
+        // 7. Optional Story Bible Appendix
+        if options.includeStoryBibleAppendix && (!book.characters.isEmpty || !book.locations.isEmpty) {
+            var appendixParts: [String] = ["<section epub:type=\"appendix\">", "<h1>Apêndice — Bíblia da História</h1>"]
+            if !book.characters.isEmpty {
+                appendixParts.append("<h2>Personagens</h2>")
+                for char in book.characters {
+                    appendixParts.append("<h3>\(escapeHTML(char.name)) (\(escapeHTML(char.role.rawValue)))</h3>")
+                    if !char.summary.isEmpty {
+                        appendixParts.append("<p>\(escapeHTML(char.summary))</p>")
+                    }
+                }
+            }
+            if !book.locations.isEmpty {
+                appendixParts.append("<h2>Locais &amp; Cenários</h2>")
+                for loc in book.locations {
+                    appendixParts.append("<h3>\(escapeHTML(loc.name))</h3>")
+                    if !loc.description.isEmpty {
+                        appendixParts.append("<p>\(escapeHTML(loc.description))</p>")
+                    }
+                }
+            }
+            appendixParts.append("</section>")
+
+            try wrapXHTML(title: "Apêndice — Bíblia da História", bodyContent: appendixParts.joined(separator: "\n"))
+                .write(to: oebpsDir.appendingPathComponent("appendix.xhtml"), atomically: true, encoding: .utf8)
+            manifestItems.append(("appendix", "appendix.xhtml", "application/xhtml+xml", nil))
+            spineItemIds.append("appendix")
+            tocEntries.append(("appendix", "Apêndice — Bíblia da História", "appendix.xhtml"))
+        }
+
+        // 8. OEBPS/nav.xhtml (EPUB 3 Navigation Document)
+        let navListItems = tocEntries.map { entry in
+            "<li><a href=\"\(entry.href)\">\(escapeHTML(entry.title))</a></li>"
+        }.joined(separator: "\n                ")
+
+        let firstContentHref = tocEntries.first?.href ?? "nav.xhtml"
+        let navXHTML = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE html>
+        <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="pt-BR" lang="pt-BR">
+        <head>
+            <meta charset="UTF-8" />
+            <title>Sumário</title>
+            <link rel="stylesheet" type="text/css" href="style.css" />
+        </head>
+        <body>
+            <nav epub:type="toc" id="toc">
+                <h1>Sumário</h1>
+                <ol>
+                \(navListItems)
+                </ol>
+            </nav>
+            <nav epub:type="landmarks" hidden="hidden">
+                <h2>Guia</h2>
+                <ol>
+                    <li><a epub:type="toc" href="nav.xhtml">Sumário</a></li>
+                    <li><a epub:type="bodymatter" href="\(firstContentHref)">Início da Leitura</a></li>
+                </ol>
+            </nav>
+        </body>
+        </html>
+        """
+        try navXHTML.write(to: oebpsDir.appendingPathComponent("nav.xhtml"), atomically: true, encoding: .utf8)
+
+        // 9. OEBPS/toc.ncx (Kindle NCX compatibility)
+        let navPoints = tocEntries.enumerated().map { idx, entry in
+            """
+            <navPoint id="navPoint-\(idx + 1)" playOrder="\(idx + 1)">
+                <navLabel><text>\(escapeHTML(entry.title))</text></navLabel>
+                <content src="\(entry.href)"/>
+            </navPoint>
+            """
+        }.joined(separator: "\n        ")
+
+        let tocNCX = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+            <head>
+                <meta name="dtb:uid" content="urn:uuid:\(book.id.uuidString)"/>
+                <meta name="dtb:depth" content="1"/>
+                <meta name="dtb:totalPageCount" content="0"/>
+                <meta name="dtb:maxPageNumber" content="0"/>
+            </head>
+            <docTitle><text>\(escapeHTML(book.title))</text></docTitle>
+            <docAuthor><text>\(escapeHTML(book.author))</text></docAuthor>
+            <navMap>
+                \(navPoints)
+            </navMap>
+        </ncx>
+        """
+        try tocNCX.write(to: oebpsDir.appendingPathComponent("toc.ncx"), atomically: true, encoding: .utf8)
+
+        // 10. OEBPS/content.opf
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime]
+        let modifiedTimestamp = isoFormatter.string(from: Date())
+
+        let manifestXML = manifestItems.map { item in
+            let propAttr = item.properties != nil ? " properties=\"\(item.properties!)\"" : ""
+            return "<item id=\"\(item.id)\" href=\"\(item.href)\" media-type=\"\(item.mediaType)\"\(propAttr)/>"
+        }.joined(separator: "\n        ")
+
+        let spineXML = spineItemIds.map { id in
+            "<itemref idref=\"\(id)\"/>"
+        }.joined(separator: "\n        ")
+
+        let contentOPF = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="BookId" xml:lang="pt-BR">
+            <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+                <dc:identifier id="BookId">urn:uuid:\(book.id.uuidString)</dc:identifier>
+                <dc:title>\(escapeHTML(book.title))</dc:title>
+                <dc:creator>\(escapeHTML(book.author))</dc:creator>
+                <dc:language>pt-BR</dc:language>
+                <dc:subject>\(escapeHTML(book.genre))</dc:subject>
+                <dc:description>\(escapeHTML(book.synopsis))</dc:description>
+                <meta property="dcterms:modified">\(modifiedTimestamp)</meta>
+            </metadata>
+            <manifest>
+                \(manifestXML)
+            </manifest>
+            <spine toc="ncx">
+                \(spineXML)
+            </spine>
+        </package>
+        """
+        try contentOPF.write(to: oebpsDir.appendingPathComponent("content.opf"), atomically: true, encoding: .utf8)
+
+        // 11. Package into valid EPUB ZIP archive (/usr/bin/zip)
+        if fm.fileExists(atPath: fileURL.path) {
+            try fm.removeItem(at: fileURL)
+        }
+
+        // Step A: Store mimetype uncompressed (-0 -X) as the first entry
+        try runZip(arguments: ["-0", "-X", "-q", fileURL.path, "mimetype"], currentDirectory: stagingDir)
+        // Step B: Add META-INF and OEBPS recursively (-r -X -9)
+        try runZip(arguments: ["-r", "-X", "-9", "-q", fileURL.path, "META-INF", "OEBPS"], currentDirectory: stagingDir)
+    }
+
+    private static func runZip(arguments: [String], currentDirectory: URL) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
+        process.arguments = arguments
+        process.currentDirectoryURL = currentDirectory
+
+        try process.run()
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else {
+            throw NSError(
+                domain: "TintaExporter",
+                code: Int(process.terminationStatus),
+                userInfo: [NSLocalizedDescriptionKey: "Falha ao empacotar o arquivo EPUB (código \(process.terminationStatus))."]
+            )
+        }
     }
 
     public static func stripLeadingDuplicateHeading(from content: String, title: String) -> String {

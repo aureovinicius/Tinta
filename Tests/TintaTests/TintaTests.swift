@@ -105,6 +105,13 @@ struct TintaTests {
         try BookExporter.exportStructuredFolder(book: book, to: tempExportDir)
         let fullBookPath = tempExportDir.appendingPathComponent("00_Livro_Completo.md").path
         #expect(FileManager.default.fileExists(atPath: fullBookPath))
+
+        let tempEpubURL = tempExportDir.appendingPathComponent("Farol.epub")
+        try BookExporter.exportEPUB(book: book, to: tempEpubURL)
+        #expect(FileManager.default.fileExists(atPath: tempEpubURL.path))
+        let epubAttributes = try FileManager.default.attributesOfItem(atPath: tempEpubURL.path)
+        let epubSize = (epubAttributes[.size] as? NSNumber)?.intValue ?? 0
+        #expect(epubSize > 1000)
     }
 
     @Test("Alternância de Modo Noturno e retenção de temas preferidos")
