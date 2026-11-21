@@ -5,7 +5,12 @@ public final class TintaAppDelegate: NSObject, NSApplicationDelegate {
     public func applicationDidFinishLaunching(_ notification: Notification) {
         NSApplication.shared.setActivationPolicy(.regular)
         NSApplication.shared.activate(ignoringOtherApps: true)
-        if NSApplication.shared.applicationIconImage == nil || Bundle.main.bundleIdentifier == nil {
+        if let bundledIconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+           let bundledIcon = NSImage(contentsOf: bundledIconURL) {
+            NSApplication.shared.applicationIconImage = bundledIcon
+        } else if let localIcon = NSImage(contentsOfFile: "Resources/AppIcon.icns") {
+            NSApplication.shared.applicationIconImage = localIcon
+        } else {
             NSApplication.shared.applicationIconImage = Self.makeLiteraryAppIcon()
         }
     }

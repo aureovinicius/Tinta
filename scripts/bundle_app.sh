@@ -23,6 +23,10 @@ mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 cp "${BIN_PATH}" "${MACOS_DIR}/${APP_NAME}"
 chmod +x "${MACOS_DIR}/${APP_NAME}"
 
+if [[ -f "${ROOT_DIR}/Resources/AppIcon.icns" ]]; then
+    cp "${ROOT_DIR}/Resources/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
+fi
+
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -34,6 +38,10 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <string>${APP_NAME}</string>
     <key>CFBundleExecutable</key>
     <string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>${BUNDLE_ID}</string>
     <key>CFBundleInfoDictionaryVersion</key>
@@ -60,5 +68,6 @@ echo -n "APPL????" > "${CONTENTS_DIR}/PkgInfo"
 
 # Ad-hoc codesign for clean local execution on macOS Apple Silicon
 codesign --force --deep --sign - "${APP_BUNDLE}" >/dev/null 2>&1 || true
+touch "${APP_BUNDLE}"
 
 echo "==> Concluído: ${APP_BUNDLE}"
