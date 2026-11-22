@@ -12,3 +12,6 @@ xcuserdata/
 
 # Packaged binary bundle (generated via make app / scripts/bundle_app.sh)
 Tinta.app/
+
+# Cross-platform Tauri fork directory (tracked in its own Git repo)
+Tinta-Tauri/
